@@ -90,7 +90,7 @@ bool __fastcall TNotesClientModule::FindNote(const String & ATitle, TNote * ANot
 	{
 		// Add a parameter to get note request
 		lParam->Kind = TRESTRequestParameterKind::pkGETorPOST;
-		lParam->name = "title";
+		lParam->Name = "title";
 		lParam->Value = ATitle;
 		BackendEndpointGetNote->Execute();
 		lNotes = TNoteJSON::JSONToNotes(GetJSONArray(lEndpoint->Response));

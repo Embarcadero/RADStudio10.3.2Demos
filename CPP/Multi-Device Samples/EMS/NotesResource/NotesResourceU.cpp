@@ -26,7 +26,7 @@ __fastcall TNotesResource1::TNotesResource1(TComponent* Owner)
 
 __fastcall TNotesResource1::~TNotesResource1(void)
 {
-    FreeAndNil(FNotesStorage);
+    FreeAndNil(&FNotesStorage);
 }
 
 void TNotesResource1::HandleException(void)
@@ -81,7 +81,7 @@ void TNotesResource1::Get(TEndpointContext* AContext, TEndpointRequest* ARequest
 		AResponse->Body->SetValue(lJson, true);
 	}
 	catch(...) {
-		FreeAndNil(lJson);
+		FreeAndNil(&lJson);
 		HandleException();
 	}
 }

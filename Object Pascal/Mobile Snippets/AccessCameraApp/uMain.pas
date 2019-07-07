@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 
-// This software is Copyright (c) 2015 Embarcadero Technologies, Inc.
+// This software is Copyright (c) 2015-2019 Embarcadero Technologies, Inc.
 // You may only use this software if you are an authorized licensee
 // of an Embarcadero developer tools product.
 // This software is considered a Redistributable as defined under
@@ -21,37 +21,28 @@ uses
 
 type
   TAccessCameraAppForm = class(TForm)
+  private const
+    PermissionCamera = 'android.permission.CAMERA';
+    PermissionReadExternalStorage = 'android.permission.READ_EXTERNAL_STORAGE';
+    PermissionWriteExternalStorage = 'android.permission.WRITE_EXTERNAL_STORAGE';
+  private
+    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
+    procedure TakePicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
+  published var
     alGetFromCamera: TActionList;
     TakePhotoFromCameraAction1: TTakePhotoFromCameraAction;
     imgCameraImage: TImage;
     ToolBar1: TToolBar;
     btnTakePhoto: TButton;
     Label1: TLabel;
+  published
     procedure TakePhotoFromCameraAction1DidFinishTaking(Image: TBitmap);
     procedure btnTakePhotoClick(Sender: TObject);
-    procedure FormCreate(Sender: TObject);
-  private
-    { Private declarations }
-    FPermissionCamera,
-    FPermissionReadExternalStorage,
-    FPermissionWriteExternalStorage: string;
-    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
-    procedure TakePicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
-  public
-    { Public declarations }
   end;
-
-var
-  AccessCameraAppForm: TAccessCameraAppForm;
 
 implementation
 
 uses
-{$IFDEF ANDROID}
-  Androidapi.Helpers,
-  Androidapi.JNI.JavaTypes,
-  Androidapi.JNI.Os,
-{$ENDIF}
   FMX.DialogService;
 
 {$R *.fmx}
@@ -59,15 +50,14 @@ uses
 
 // Optional rationale display routine to display permission requirement rationale to the user
 procedure TAccessCameraAppForm.DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
-var
-  I: Integer;
-  RationaleMsg: string;
 begin
-  for I := 0 to High(APermissions) do
+  var RationaleMsg: string;
+
+  for var I := 0 to High(APermissions) do
   begin
-    if APermissions[I] = FPermissionCamera then
+    if APermissions[I] = PermissionCamera then
       RationaleMsg := RationaleMsg + 'The app needs to access the camera to take a photo' + SLineBreak + SLineBreak
-    else if APermissions[I] = FPermissionReadExternalStorage then
+    else if APermissions[I] = PermissionReadExternalStorage then
       RationaleMsg := RationaleMsg + 'The app needs to read a photo file from your device';
   end;
 
@@ -80,18 +70,9 @@ begin
     end)
 end;
 
-procedure TAccessCameraAppForm.FormCreate(Sender: TObject);
-begin
-{$IFDEF ANDROID}
-  FPermissionCamera := JStringToString(TJManifest_permission.JavaClass.CAMERA);
-  FPermissionReadExternalStorage := JStringToString(TJManifest_permission.JavaClass.READ_EXTERNAL_STORAGE);
-  FPermissionWriteExternalStorage := JStringToString(TJManifest_permission.JavaClass.WRITE_EXTERNAL_STORAGE);
-{$ENDIF}
-end;
-
 procedure TAccessCameraAppForm.btnTakePhotoClick(Sender: TObject);
 begin
-  PermissionsService.RequestPermissions([FPermissionCamera, FPermissionReadExternalStorage, FPermissionWriteExternalStorage], TakePicturePermissionRequestResult, DisplayRationale)
+  PermissionsService.RequestPermissions([PermissionCamera, PermissionReadExternalStorage, PermissionWriteExternalStorage], TakePicturePermissionRequestResult, DisplayRationale)
 end;
 
 procedure TAccessCameraAppForm.TakePicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);

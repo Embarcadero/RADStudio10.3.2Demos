@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 
-// This software is Copyright (c) 2015 Embarcadero Technologies, Inc.
+// This software is Copyright (c) 2015-2019 Embarcadero Technologies, Inc.
 // You may only use this software if you are an authorized licensee
 // of an Embarcadero developer tools product.
 // This software is considered a Redistributable as defined under
@@ -21,6 +21,7 @@ uses
 
 type
   TLocationForm = class(TForm)
+  published var
     LocationSensor1: TLocationSensor;
     WebBrowser1: TWebBrowser;
     ListBox1: TListBox;
@@ -38,6 +39,7 @@ type
     lbLongitude: TListBoxItem;
     ToolBar1: TToolBar;
     Label1: TLabel;
+  published
     procedure LocationSensor1LocationChanged(Sender: TObject; const OldLocation, NewLocation: TLocationCoord2D);
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -46,24 +48,12 @@ type
     procedure swLocationSensorActiveSwitch(Sender: TObject);
     procedure nbTriggerDistanceChange(Sender: TObject);
     procedure nbAccuracyChange(Sender: TObject);
-  private
-    { Private declarations }
-  public
-    { Public declarations }
   end;
-
-var
-  LocationForm: TLocationForm;
 
 implementation
 
 uses
   System.Permissions,
-{$IFDEF ANDROID}
-  Androidapi.JNI.Os,
-  Androidapi.JNI.JavaTypes,
-  Androidapi.Helpers,
-{$ENDIF}
   FMX.DialogService;
 
 {$R *.fmx}
@@ -90,18 +80,17 @@ end;
 
 procedure TLocationForm.LocationSensor1LocationChanged(Sender: TObject; const OldLocation, NewLocation: TLocationCoord2D);
 const
-  LGoogleMapsURL: String = 'https://maps.google.com/maps?q=%s,%s';
-var
-  ENUSLat, ENUSLong: String; // holders for URL strings
+  GoogleMapsURL: String = 'https://maps.google.com/maps?q=%s,%s';
 begin
-  ENUSLat := NewLocation.Latitude.ToString(ffGeneral, 5, 2, TFormatSettings.Create('en-US'));
-  ENUSLong := NewLocation.Longitude.ToString(ffGeneral, 5, 2, TFormatSettings.Create('en-US'));
+  var Latitude := NewLocation.Latitude.ToString(ffGeneral, 5, 2, TFormatSettings.Create('en-US'));
+  var Longitude := NewLocation.Longitude.ToString(ffGeneral, 5, 2, TFormatSettings.Create('en-US'));
+
   { convert the location to latitude and longitude }
-  lbLatitude.Text := 'Latitude: ' + ENUSLat;
-  lbLongitude.Text := 'Longitude: ' + ENUSLong;
+  lbLatitude.Text := 'Latitude: ' + Latitude;
+  lbLongitude.Text := 'Longitude: ' + Longitude;
 
   { and track the location via Google Maps }
-  WebBrowser1.Navigate(Format(LGoogleMapsURL, [ENUSLat, ENUSLong]));
+  WebBrowser1.Navigate(Format(GoogleMapsURL, [Latitude, Longitude]));
 end;
 
 procedure TLocationForm.nbAccuracyChange(Sender: TObject);
@@ -117,24 +106,26 @@ begin
 end;
 
 procedure TLocationForm.swLocationSensorActiveSwitch(Sender: TObject);
+const
+  PermissionAccessFineLocation = 'android.permission.ACCESS_FINE_LOCATION';
 begin
 {$IFDEF ANDROID}
-  if swLocationSensorActive.IsChecked then
-    PermissionsService.RequestPermissions([JStringToString(TJManifest_permission.JavaClass.ACCESS_FINE_LOCATION)],
-      procedure(const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>)
+  PermissionsService.RequestPermissions([PermissionAccessFineLocation],
+    procedure(const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>)
+    begin
+      if (Length(AGrantResults) = 1) and (AGrantResults[0] = TPermissionStatus.Granted) then
+        { activate or deactivate the location sensor }
+        LocationSensor1.Active := swLocationSensorActive.IsChecked
+      else
       begin
-        if (Length(AGrantResults) = 1) and (AGrantResults[0] = TPermissionStatus.Granted) then
-          { activate or deactivate the location sensor }
-          LocationSensor1.Active := True
-        else
-        begin
-          swLocationSensorActive.IsChecked := False;
-          TDialogService.ShowMessage('Location permission not granted');
-        end;
-      end)
-  else
+        swLocationSensorActive.IsChecked := False;
+
+        TDialogService.ShowMessage('Location permission not granted');
+      end;
+    end);
+{$ELSE}
+  LocationSensor1.Active := swLocationSensorActive.IsChecked;
 {$ENDIF}
-    LocationSensor1.Active := False;
 end;
 
 end.

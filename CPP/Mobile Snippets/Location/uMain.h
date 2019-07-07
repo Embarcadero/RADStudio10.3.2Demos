@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 
-// This software is Copyright (c) 2015 Embarcadero Technologies, Inc.
+// This software is Copyright (c) 2015-2019 Embarcadero Technologies, Inc.
 // You may only use this software if you are an authorized licensee
 // of an Embarcadero developer tools product.
 // This software is considered a Redistributable as defined under
@@ -49,6 +49,7 @@ __published:	// IDE-managed Components
 	TListBoxItem *lbLongitude;
 	TToolBar *ToolBar1;
 	TLabel *Label1;
+
 	void __fastcall swLocationSensorActiveSwitch(TObject *Sender);
 	void __fastcall Button1Click(TObject *Sender);
 	void __fastcall Button2Click(TObject *Sender);

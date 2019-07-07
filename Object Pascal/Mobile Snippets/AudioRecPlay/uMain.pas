@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 
-// This software is Copyright (c) 2015 Embarcadero Technologies, Inc.
+// This software is Copyright (c) 2015-2019 Embarcadero Technologies, Inc.
 // You may only use this software if you are an authorized licensee
 // of an Embarcadero developer tools product.
 // This software is considered a Redistributable as defined under
@@ -27,6 +27,14 @@ const
 
 type
   TAudioRecPlayForm = class(TForm)
+  private var
+    FMicrophone: TAudioCaptureDevice;
+  private
+    function HasMicrophone: Boolean;
+    function IsMicrophoneRecording: Boolean;
+    procedure RequestPermissionsResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
+    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
+  published var
     btnStartRec: TButton;
     btnStopRec: TButton;
     btnStartPlay: TButton;
@@ -42,6 +50,7 @@ type
     actStopRecording: TAction;
     actPlay: TAction;
     actStop: TAction;
+  published
     procedure FormCreate(Sender: TObject);
     procedure actStartRecordingExecute(Sender: TObject);
     procedure actStopRecordingExecute(Sender: TObject);
@@ -50,24 +59,11 @@ type
     procedure ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
     procedure imgOnClick(Sender: TObject);
     procedure imgOffClick(Sender: TObject);
-  private
-    FMicrophone: TAudioCaptureDevice;
-    FPermission: string;
-    function HasMicrophone: Boolean;
-    function IsMicrophoneRecording: Boolean;
-    procedure RequestPermissionsResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
-    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
   end;
-
-var
-  AudioRecPlayForm: TAudioRecPlayForm;
 
 implementation
 
 uses
-{$IFDEF ANDROID}
-  Androidapi.Helpers, Androidapi.JNI.JavaTypes, Androidapi.JNI.Os,
-{$ENDIF}
   System.IOUtils, FMX.DialogService;
 
 {$R *.fmx}
@@ -111,16 +107,20 @@ begin
 end;
 
 procedure TAudioRecPlayForm.actStartRecordingExecute(Sender: TObject);
+const
+  PermissionRecordAudio = 'android.permission.RECORD_AUDIO';
 begin
   actStop.Execute;
 
   { get the microphone device }
   FMicrophone := TCaptureDeviceManager.Current.DefaultAudioCaptureDevice;
+
   if HasMicrophone then
   begin
     { and attempt to record to 'test.caf' file }
     FMicrophone.FileName := GetAudioFileName(AUDIO_FILENAME);
-    PermissionsService.RequestPermissions([FPermission], RequestPermissionsResult, DisplayRationale);
+
+    PermissionsService.RequestPermissions([PermissionRecordAudio], RequestPermissionsResult, DisplayRationale);
   end
   else
     TDialogService.ShowMessage('No microphone is available.');
@@ -186,9 +186,6 @@ end;
 
 procedure TAudioRecPlayForm.FormCreate(Sender: TObject);
 begin
-{$IFDEF ANDROID}
-  FPermission := JStringToString(TJManifest_permission.JavaClass.RECORD_AUDIO);
-{$ENDIF}
   FMicrophone := TCaptureDeviceManager.Current.DefaultAudioCaptureDevice;
 end;
 

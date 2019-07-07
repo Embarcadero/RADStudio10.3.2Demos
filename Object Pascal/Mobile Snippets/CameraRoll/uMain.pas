@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
 
-// This software is Copyright (c) 2015 Embarcadero Technologies, Inc.
+// This software is Copyright (c) 2015-2019 Embarcadero Technologies, Inc.
 // You may only use this software if you are an authorized licensee
 // of an Embarcadero developer tools product.
 // This software is considered a Redistributable as defined under
@@ -21,43 +21,34 @@ uses
 
 type
   TCameraRollForm = class(TForm)
+  private
+    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
+    procedure LoadPicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
+  published var
     btnPhotoLibrary: TButton;
     imgPhotoLibraryImage: TImage;
     alGetCameraRoll: TActionList;
     TakePhotoFromLibraryAction1: TTakePhotoFromLibraryAction;
     ToolBar1: TToolBar;
     Label1: TLabel;
+  published
     procedure TakePhotoFromLibraryAction1DidFinishTaking(Image: TBitmap);
-    procedure FormCreate(Sender: TObject);
     procedure btnPhotoLibraryClick(Sender: TObject);
-  private
-    { Private declarations }
-    FPermissionReadExternalStorage: string;
-    procedure DisplayRationale(Sender: TObject; const APermissions: TArray<string>; const APostRationaleProc: TProc);
-    procedure LoadPicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);
-  public
-    { Public declarations }
   end;
-
-var
-  CameraRollForm: TCameraRollForm;
 
 implementation
 
 uses
-{$IFDEF ANDROID}
-  Androidapi.Helpers,
-  Androidapi.JNI.JavaTypes,
-  Androidapi.JNI.Os,
-{$ENDIF}
   FMX.DialogService;
 
 {$R *.fmx}
 {$R *.LgXhdpiPh.fmx ANDROID}
 
 procedure TCameraRollForm.btnPhotoLibraryClick(Sender: TObject);
+const
+  PermissionReadExternalStorage = 'android.permission.READ_EXTERNAL_STORAGE';
 begin
-  PermissionsService.RequestPermissions([FPermissionReadExternalStorage], LoadPicturePermissionRequestResult, DisplayRationale)
+  PermissionsService.RequestPermissions([PermissionReadExternalStorage], LoadPicturePermissionRequestResult, DisplayRationale)
 end;
 
 // Optional rationale display routine to display permission requirement rationale to the user
@@ -70,13 +61,6 @@ begin
     begin
       APostRationaleProc;
     end)
-end;
-
-procedure TCameraRollForm.FormCreate(Sender: TObject);
-begin
-{$IFDEF ANDROID}
-  FPermissionReadExternalStorage := JStringToString(TJManifest_permission.JavaClass.READ_EXTERNAL_STORAGE);
-{$ENDIF}
 end;
 
 procedure TCameraRollForm.LoadPicturePermissionRequestResult(Sender: TObject; const APermissions: TArray<string>; const AGrantResults: TArray<TPermissionStatus>);

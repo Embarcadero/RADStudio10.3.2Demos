@@ -16,7 +16,7 @@ object NotesClientModule: TNotesClientModule
     Params = <
       item
         Kind = pkURLSEGMENT
-        name = 'item'
+        Name = 'item'
         Options = [poAutoCreated]
       end>
     Resource = 'Notes'
@@ -31,7 +31,7 @@ object NotesClientModule: TNotesClientModule
     Params = <
       item
         Kind = pkURLSEGMENT
-        name = 'item'
+        Name = 'item'
         Options = [poAutoCreated]
       end>
     Resource = 'Notes'
@@ -60,7 +60,7 @@ object NotesClientModule: TNotesClientModule
     Params = <
       item
         Kind = pkURLSEGMENT
-        name = 'item'
+        Name = 'item'
         Options = [poAutoCreated]
       end>
     Resource = 'Notes'
